@@ -712,6 +712,8 @@ def create_vm(module, proxmox, vmid, newid, node, name, memory, cpu, cores, sock
             del kwargs['ide']
         if 'net' in kwargs:
             del kwargs['net']
+        if 'force' in kwargs:
+            del kwargs['force']
 
     # Convert all dict in kwargs to elements. For hostpci[n], ide[n], net[n], numa[n], parallel[n], sata[n], scsi[n], serial[n], virtio[n]
     for k in list(kwargs.keys()):

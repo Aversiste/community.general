@@ -18,30 +18,29 @@ from ansible.module_utils.basic import env_fallback, missing_required_lib
 class ProxmoxAnsible:
     def __init__(self, module):
         self.proxmox_api = self._connnect(module)
+        # Test token validity
+        try:
+            self.proxmox_api.version.get()
+        except Exception as e:
+            module.fail_json(msg='%s' %e, exception=traceback.format_exc())
 
     def _connnect(self, module):
         api_host = module.params['api_host']
         api_user = module.params['api_user']
         api_password = module.params['api_password']
+        api_token_id = module.params['api_token_id']
+        api_token_secret = module.params['api_token_secret']
         validate_certs = module.params['validate_certs']
 
-        if not api_host:
-            module.fail_json(msg='The api_host paramater is missing.'
-                                'Please specify this paramter in the task or'
-                                'use the environment variable PROXMOX_HOST')
-
-        if not api_user:
-            module.fail_json(msg='The api_user paramater is missing.'
-                                'Please specify this paramter in the task or'
-                                'use the environment variable PROXMOX_USER')
-        
-        if not api_password:
-            module.fail_json(msg='The api_password paramater is missing.'
-                                'Please specify this paramter in the task or'
-                                'use the environment variable PROXMOX_PASSWORD')
+        auth_args = {'user': api_user}
+        if api_password:
+            auth_args['password'] = api_password
+        else:
+            auth_args['token_name'] = api_token_id
+            auth_args['token_value'] = api_token_secret
 
         try:
-            return ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
+            return ProxmoxAPI(api_host, verify_ssl=validate_certs, **auth_args)
         except Exception as e:
             module.fail_json(msg='%s' %e, exception=traceback.format_exc())
 
@@ -147,6 +146,10 @@ def proxmox_argument_spec():
         api_password = dict(
             no_log = True,
             fallback = (env_fallback, ['PROXMOX_PASSWORD'])),
+        api_token_id = dict(
+            no_log = True),
+        api_token_secret = dict(
+            no_log = True),
         load_sections = dict(
             type = 'list',
             default = ['config']),
@@ -169,6 +172,8 @@ def run_module():
     module = AnsibleModule(
         argument_spec=module_args,
         mutually_exclusive=[('vmid', 'name', 'node')],
+        required_one_of=[('api_password', 'api_token_id')],
+        required_together=[('api_token_id', 'api_token_secret')],
         supports_check_mode=True
     )
 
@@ -181,9 +186,9 @@ def run_module():
 
     name = module.params['name']
     node = module.params['node']
-    api_user = module.params['api_user']
     api_host = module.params['api_host']
     api_password = module.params['api_password']
+    api_user = module.params['api_user']
     vm_type = module.params['type']
     vmid = module.params['vmid']
     validate_certs = module.params['validate_certs']

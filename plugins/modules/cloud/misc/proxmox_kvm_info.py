@@ -15,6 +15,30 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.basic import env_fallback, missing_required_lib
 
+# https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#developing-modules-documenting
+DOCUMENTATION = r'''
+module: proxmox_kvm_info
+short_description: ...
+description: ...
+version_added: ...
+author: ...
+options:
+  name:
+  node:
+  api_host:
+  api_user:
+  api_password:
+  api_token_id:
+  api_token_secret:
+  load_sections:
+  type:
+  validate_certs:
+  vmid:
+requirements:
+seealso:
+notes:
+'''
+
 class ProxmoxAnsible:
     def __init__(self, module):
         self.proxmox_api = self._connnect(module)
